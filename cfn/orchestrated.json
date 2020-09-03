@@ -1,0 +1,346 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Create an Amazon EC2 instance running the Amazon Linux AMI, an EC2 security group for the instance to give you SSH access and a Route 53 record point to the instance.",
+  "Parameters": {
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Default": "ec2key",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+    "InstanceType": {
+      "Description": "WebServer EC2 instance type",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+    "SSHLocation": {
+      "Description": "The IP address range that can be used to SSH to the EC2 instances",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "HostedZoneName": {
+      "Description": "The route53 HostedZoneName. Don't forget the period at the end.",
+      "Type": "String",
+      "Default": ""
+    }
+  },
+  "Mappings": {
+    "AWSInstanceType2Arch": {
+      "t2.micro": {
+        "Arch": "HVM64"
+      }
+    },
+    "AWSInstanceType2NATArch": {
+      "t2.micro": {
+        "Arch": "NATHVM64"
+      }
+    },
+    "AWSRegionArch2AMI": {
+      "ap-southeast-2": {
+        "PV64": "ami-63351d00",
+        "HVM64": "ami-dc361ebf",
+        "HVMG2": "ami-0ad2db69"
+      }
+    }
+  },
+  "Resources": {
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": {
+          "Ref": "InstanceType"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "InstanceSecurityGroup"
+          }
+        ],
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Fn::FindInMap": [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref": "InstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "created_by",
+            "Value": "TME520"
+          },
+          {
+            "Key": "expiry",
+            "Value": "never"
+          },
+          {
+            "Key": "purpose",
+            "Value": "Runs tests for self-training."
+          },
+          {
+            "Key": "stack",
+            "Value": { "Ref": "AWS::StackName" }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64" : {
+            "Fn::Join" : [
+              "", [
+                "#!/bin/bash -xe\n",
+                "yum install -y aws-cfn-bootstrap\n",
+                "/opt/aws/bin/cfn-init ",
+                "         --stack ", { "Ref" : "AWS::StackName" },
+                "         --resource EC2Instance ",
+                "         --configsets FullProtocol7 ",
+                "         --region ", { "Ref" : "AWS::Region" }, "\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "FullProtocol7": ["SetTZ", "AddYumRepositories","YumUpgrade","BasicSetup","DDBInstall","DDBStart","cloneApolloTuto","apolloServerSetup","apolloClientSetup"]
+          },
+          "SetTZ": {
+            "files": {
+              "/etc/sysconfig/clock": {
+                "content": {
+                  "Fn::Join": [
+                    "", [
+                      "ZONE=\"Australia/Melbourne\"\n",
+                      "UTC=true"
+                    ]
+                  ]
+                }
+              }
+            },
+            "commands": {
+              "set_timezone": {
+                "command": "echo 'Setting timezone to Australia/Melbourne...' && ln -sf /usr/share/zoneinfo/Australia/Melbourne /etc/localtime"
+              }
+            }
+          },
+          "AddYumRepositories": {
+            "commands": {
+              "add_jenkins_repo": {
+                "command": "curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -"
+              }
+            }
+          },
+          "YumUpgrade": {
+            "commands": {
+              "upgrade_yum_packages": {
+                "command": "yum update -y && yum upgrade -y"
+              }
+            }
+          },
+          "BasicSetup": {
+            "packages": {
+              "yum": {
+                "htop": [],
+                "git": [],
+                "nodejs": []
+              }
+            },
+            "commands": {
+              "yum_install_group_devtools": {
+                "command": "yum groupinstall -y 'Development Tools'"
+              }
+            }
+          },
+          "DDBInstall": {
+            "commands": {
+              "dl_and_install_dynamodb": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "cd /home/ec2-user/ && mkdir dynamodb && cd ./dynamodb;",
+                      "wget -O dynamodb_local_latest.tar.gz https://s3.ap-southeast-1.amazonaws.com/dynamodb-local-singapore/dynamodb_local_latest.tar.gz;",
+                      "tar xzvf dynamodb_local_latest.tar.gz;",
+                      "chown -R ec2-user:ec2-user /home/ec2-user/dynamodb/;"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "DDBStart": {
+            "commands": {
+              "start_dynamodb": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "cd /home/ec2-user/dynamodb/;",
+                      "nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -port 8001 > foo.out 2> foo.err < /dev/null &"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "cloneApolloTuto": {
+            "commands": {
+              "clone_apollo_tutorial": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "echo 'Cloning Apollo tutorial...';",
+                      "cd /home/ec2-user/;",
+                      "git clone https://github.com/apollographql/fullstack-tutorial.git;",
+                      "chown -R ec2-user:ec2-user ./fullstack-tutorial/;"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "apolloServerSetup": {
+            "commands": {
+              "npm_install_apollo_server": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "cd /home/ec2-user/fullstack-tutorial/start/server/;",
+                      "npm install;",
+                      "npm install sqlite3 --save;",
+                      "npm install sequelize --save"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "apolloClientSetup": {
+            "commands": {
+              "npm_install_apollo_client": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "cd /home/ec2-user/fullstack-tutorial/start/client/;",
+                      "npm install"
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "InstanceSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Enable SSH access via port 22",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key" : "created_by",
+            "Value" : "TME520"
+          },
+          {
+            "Key" : "expiry",
+            "Value" : "never"
+          },
+          {
+            "Key" : "purpose",
+            "Value" : "Runs tests for self-training."
+          },
+          {
+            "Key": "stack",
+            "Value": { "Ref": "AWS::StackName" }
+          }
+        ]
+      }
+    },
+    "myDNSRecord" : {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "HostedZoneName": { "Ref": "HostedZoneName" },
+        "Comment": "DNS name for my instance",
+        "Name" : { "Fn::Join": [ "", [ "", { "Ref": "AWS::StackName" }, ".", { "Ref": "HostedZoneName" } ] ] },
+        "TTL" : "900",
+        "Type" : "CNAME",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "EC2Instance", "PublicIp" ] }
+        ]
+      }
+   }
+  },
+  "Outputs": {
+    "InstanceId": {
+      "Description": "InstanceId of the newly created EC2 instance",
+      "Value": {
+        "Ref": "EC2Instance"
+      }
+    },
+    "AZ": {
+      "Description": "Availability Zone of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "AvailabilityZone"
+        ]
+      }
+    },
+    "PublicDNS": {
+      "Description": "Public DNSName of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "PublicDnsName"
+        ]
+      }
+    },
+    "PublicIP": {
+      "Description": "Public IP address of the newly created EC2 instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "EC2Instance",
+          "PublicIp"
+        ]
+      }
+    },
+    "SSHConnectionShellCommand": {
+      "Description": "The command line you have to type in order to SSH into the EC2 instance (path to SSH key may vary).",
+      "Value": {
+        "Fn::Join": [ "", [ "", "ssh -v -i $HOME/.ssh/", { "Ref": "KeyName"}, ".pem ec2-user@", { "Fn::GetAtt": [ "EC2Instance", "PublicIp" ] } ] ]
+      }
+    },
+    "RecordSetName": {
+      "Description": "The DNS entry pointing to the EC2 instance.",
+      "Value": {
+        "Fn::Join": [ "", [ "", { "Ref": "AWS::StackName" }, ".", { "Ref": "HostedZoneName" } ] ]
+      }
+    }
+  }
+}
