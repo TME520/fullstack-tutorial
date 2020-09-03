@@ -48,13 +48,13 @@ pipeline {
         }
         stage('Create stack') {
             environment {
-                SLACK_TOKEN = credentials('slack_token')
-                SUMO_ENDPOINT = credentials('sumo_endpoint')
                 AWS_SECRET_KEY_DATA = credentials('aws_access_key')
             }
             steps {
                 script {
                     def (aws_access_key_id, aws_secret_access_key) = AWS_SECRET_KEY_DATA.tokenize( ':' )
+                    println aws_access_key_id
+                    println aws_secret_access_key
                 }
                 echo "Creating the stack"
                 echo "Stack name: ${params.stack_name}"
