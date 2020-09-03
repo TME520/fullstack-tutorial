@@ -215,7 +215,7 @@
                     "", [
                       "echo 'Cloning Apollo tutorial...';",
                       "cd /home/ec2-user/;",
-                      "git clone https://github.com/apollographql/fullstack-tutorial.git;",
+                      "git clone https://github.com/TME520/fullstack-tutorial.git;",
                       "chown -R ec2-user:ec2-user ./fullstack-tutorial/;"
                     ]
                   ]
