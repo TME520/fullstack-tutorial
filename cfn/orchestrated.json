@@ -30,6 +30,26 @@
       "Description": "The route53 HostedZoneName. Don't forget the period at the end.",
       "Type": "String",
       "Default": ""
+    },
+    "S3BucketName": {
+      "Description": "Name of the S3 bucket hosting the dashboard.",
+      "Type": "String",
+      "Default": ""
+    },
+    "AWSSecretKeyID": {
+      "Description": "AWS secret access key ID.",
+      "Type": "String",
+      "Default": ""
+    },
+    "AWSSecretAccessKey": {
+      "Description": "AWS secret access key.",
+      "Type": "String",
+      "Default": ""
+    },
+    "AWSRegion": {
+      "Description": "AWS region in which the stack will be created.",
+      "Type": "String",
+      "Default": ""
     }
   },
   "Mappings": {
@@ -120,7 +140,7 @@
       "Metadata": {
         "AWS::CloudFormation::Init": {
           "configSets": {
-            "FullApollo": ["SetTZ", "AddYumRepositories","YumUpgrade","BasicSetup","DDBInstall","DDBStart","cloneApolloTuto","apolloServerSetup","apolloClientSetup"]
+            "FullApollo": ["SetTZ", "AddYumRepositories","YumUpgrade","BasicSetup","DDBInstall","DDBStart","cloneApolloTuto","apolloServerSetup","apolloServerConfig","apolloClientSetup"]
           },
           "SetTZ": {
             "files": {
@@ -233,7 +253,24 @@
                       "npm install;",
                       "npm install sqlite3 --save;",
                       "npm install sequelize --save",
-                      "npm start"
+                      "# npm start"
+                    ]
+                  ]
+                }
+              }
+            }
+          },
+          "apolloServerConfig": {
+            "commands": {
+              "configure_apollo_server": {
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "cd /home/ec2-user/fullstack-tutorial/server/;",
+                      "cp -pv .env.example .env;",
+                      "sed -i 's/AWS_ACCESS_KEY_ID=/AWS_ACCESS_KEY_ID=", { "Ref": "AWSSecretKeyID"}, "/g' .env;",
+                      "sed -i 's/AWS_SECRET_ACCESS_KEY=/AWS_SECRET_ACCESS_KEY=", { "Ref": "AWSSecretAccessKey"}, "/g' .env;",
+                      "sed -i 's/AWS_S3_BUCKET=/AWS_S3_BUCKET=", { "Ref": "S3BucketName"}, "/g' .env;"
                     ]
                   ]
                 }
