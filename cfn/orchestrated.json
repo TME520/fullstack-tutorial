@@ -200,7 +200,7 @@
                   "Fn::Join": [
                     "", [
                       "cd /home/ec2-user/dynamodb/;",
-                      "nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -port 8001 > foo.out 2> foo.err < /dev/null &"
+                      "nohup java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -port 8000 > foo.out 2> foo.err < /dev/null &"
                     ]
                   ]
                 }
@@ -229,10 +229,11 @@
                 "command": {
                   "Fn::Join": [
                     "", [
-                      "cd /home/ec2-user/fullstack-tutorial/start/server/;",
+                      "cd /home/ec2-user/fullstack-tutorial/server/;",
                       "npm install;",
                       "npm install sqlite3 --save;",
-                      "npm install sequelize --save"
+                      "npm install sequelize --save",
+                      "npm start"
                     ]
                   ]
                 }
@@ -245,8 +246,9 @@
                 "command": {
                   "Fn::Join": [
                     "", [
-                      "cd /home/ec2-user/fullstack-tutorial/start/client/;",
-                      "npm install"
+                      "cd /home/ec2-user/fullstack-tutorial/client/;",
+                      "npm install;",
+                      "npm start"
                     ]
                   ]
                 }
