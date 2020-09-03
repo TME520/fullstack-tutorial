@@ -94,7 +94,7 @@
           },
           {
             "Key": "purpose",
-            "Value": "Runs tests for self-training."
+            "Value": "Created for the Orchestrated tech challenge."
           },
           {
             "Key": "stack",
@@ -110,7 +110,7 @@
                 "/opt/aws/bin/cfn-init ",
                 "         --stack ", { "Ref" : "AWS::StackName" },
                 "         --resource EC2Instance ",
-                "         --configsets FullProtocol7 ",
+                "         --configsets FullApollo ",
                 "         --region ", { "Ref" : "AWS::Region" }, "\n"
               ]
             ]
@@ -120,7 +120,7 @@
       "Metadata": {
         "AWS::CloudFormation::Init": {
           "configSets": {
-            "FullProtocol7": ["SetTZ", "AddYumRepositories","YumUpgrade","BasicSetup","DDBInstall","DDBStart","cloneApolloTuto","apolloServerSetup","apolloClientSetup"]
+            "FullApollo": ["SetTZ", "AddYumRepositories","YumUpgrade","BasicSetup","DDBInstall","DDBStart","cloneApolloTuto","apolloServerSetup","apolloClientSetup"]
           },
           "SetTZ": {
             "files": {
