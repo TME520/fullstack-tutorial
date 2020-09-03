@@ -36,6 +36,7 @@ pipeline {
             steps {
                 script {
                     external_ip = sh(script: 'curl ifconfig.me', returnStdout: true)
+                    external_ip = external_ip + '/32'
                     println external_ip
                 }
             }
