@@ -268,16 +268,31 @@
                     "", [
                       "cd /home/ec2-user/fullstack-tutorial/server/;",
                       "cp -pv .env.example .env;",
-                      "--- DEBUG ---;",
-                      "AWSSecretKeyID: ", { "Ref": "AWSSecretKeyID"}, ";",
-                      "AWSSecretAccessKey: ", { "Ref": "AWSSecretAccessKey"}, ";",
-                      "S3BucketName: ", { "Ref": "S3BucketName"}, ";",
                       "sed -i 's/AWS_ACCESS_KEY_ID=/AWS_ACCESS_KEY_ID=", { "Ref": "AWSSecretKeyID"}, "/g' .env;",
                       "sed -i 's/AWS_SECRET_ACCESS_KEY=/AWS_SECRET_ACCESS_KEY=", { "Ref": "AWSSecretAccessKey"}, "/g' .env;",
                       "sed -i 's/AWS_S3_BUCKET=/AWS_S3_BUCKET=", { "Ref": "S3BucketName"}, "/g' .env;"
                     ]
                   ]
                 }
+              }
+            },
+            "files": {
+              "/home/ec2-user/.cfn-init-run-check": {
+                "content": {
+                  "Fn::Join": [
+                    "", [
+                      "[general]\n",
+                      "Stack: ", { "Ref": "AWS::StackName" }, "\n",
+                      "Region: ", { "Ref": "AWS::Region" }, "\n",
+                      "AWSSecretKeyID:", { "Ref": "AWSSecretKeyID"}, "\n",
+                      "AWSSecretAccessKey:", { "Ref": "AWSSecretAccessKey"}, "\n",
+                      "S3BucketName:", { "Ref": "S3BucketName"}, "\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "user": "ec2-user",
+                "group": "ec2-user"
               }
             }
           },
