@@ -144,7 +144,14 @@
           "AddYumRepositories": {
             "commands": {
               "add_jenkins_repo": {
-                "command": "curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -"
+                "command": {
+                  "Fn::Join": [
+                    "", [
+                      "curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash - ;",
+                      "yum remove -y java-1.7.0-openjdk"
+                    ]
+                  ]
+                }
               }
             }
           },
@@ -160,7 +167,8 @@
               "yum": {
                 "htop": [],
                 "git": [],
-                "nodejs": []
+                "nodejs": [],
+                "java-1.8.0-openjdk-devel": []
               }
             },
             "commands": {
