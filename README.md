@@ -37,7 +37,7 @@ Ant Plugin, Authorize Project, Build Name and Description Setter, Build Timeout,
 ### Missing elements
 
 - I went through 70% of the [tutorial](https://www.apollographql.com/docs/tutorial/introduction/). I was able to get the server and the client running, and to run queries from Apollo Studio.
-- I didn't go all the way through for 2 reasons: first, I learned enough at that point, second, I found the way modifications to bring to code files were explained to be unclear at times, making it tedious to follow the tutorial. That being said, I'm glad such a tutorial existed and found it informative overall. I gave me enough knowledge to understand what I had to do.
+- I didn't go all the way through for 2 reasons: first, I learned enough at that point, second, I found the way modifications to bring to code files were explained to be unclear at times, making it tedious to follow the tutorial. That being said, I'm glad such a tutorial existed and found it informative overall. It gave me enough knowledge to understand what I had to do.
 - I have been successful in setting up and starting both server and client, and calling `http://localhost:4000/dev/graphql` locally from the EC2 instance itself shows that things are in working order. I was surprised to find calling `http://mirmidon.schneiderzupper.de.:4000/dev/graphql` from my web browser doesn't work, despite Node listening on 0.0.0.0/0 port 4000.
 - My intuition tells me it has to do with the fact we start the server in offline mode, but I would need to investigate that and I suspect it might take me a while.
 - Decision was made to send it as is; this work in its current state is enough to demonstrate I have the ability to get things done using GitHub, AWS, Jenkins, CloudFormation and Linux.
