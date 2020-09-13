@@ -1,0 +1,24 @@
+service: apollo-lambda
+plugins:
+  - serverless-offline
+custom:
+  serverless-offline:
+    httpPort: 4000
+provider:
+  name: aws
+  runtime: nodejs12.x
+  dynamodbLocalhost: ${opt:dynamodbLocalhost, ''}
+functions:
+  graphql:
+    handler: src/index.graphqlHandler
+    environment:
+      DYNAMODB_LOCALHOST: ${self:provider.dynamodbLocalhost}
+    events:
+    - http:
+        path: graphql
+        method: post
+        cors: true
+    - http:
+        path: graphql
+        method: get
+        cors: true
