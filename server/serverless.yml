@@ -1,6 +1,33 @@
 service: apollo-lambda
 plugins:
   - serverless-offline
+Resources:
+ItemsTable:
+  Type: "AWS::DynamoDB::Table"
+  Properties:
+    TableName: "trips"
+    AttributeDefinitions:
+    - AttributeName: "id"
+      AttributeType: "N"
+    KeySchema:
+    - AttributeName: "id"
+      KeyType: "HASH"
+    ProvisionedThroughput:
+      ReadCapacityUnits: 5
+      WriteCapacityUnits: 5            
+DifferentTermsPages:
+  Type: "AWS::DynamoDB::Table"
+  Properties:             
+    TableName: "users"
+    AttributeDefinitions:
+    - AttributeName: "id"
+      AttributeType: "N"
+    KeySchema:
+    - AttributeName: "id"
+      KeyType: "HASH"
+    ProvisionedThroughput:
+      ReadCapacityUnits: 5
+      WriteCapacityUnits: 5 
 custom:
   serverless-offline:
     httpPort: 4000
